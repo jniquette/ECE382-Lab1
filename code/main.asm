@@ -8,7 +8,6 @@
 ;-------------------------------------------------------------------------------
                                             ; Constants
 ;-------------------------------------------------------------------------------
-
 ADD_OP:		.equ	0x11
 SUB_OP:		.equ	0x22
 MUL_OP:		.equ	0x33
@@ -24,9 +23,8 @@ Operation:		.equ	r6
 InputPointer:	.equ	r7
 ResultsPointer:	.equ	r8
 
+INPUT:		.byte	0x77, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
 
-.data
-Results:		.space	80
 
 ;-------------------------------------------------------------------------------
             .text                           ; Assemble into program memory
@@ -40,31 +38,30 @@ RESET       mov.w   #__STACK_END,SP         ; Initialize stackpointer
 StopWDT     mov.w   #WDTPW|WDTHOLD,&WDTCTL  ; Stop watchdog timer
 
 
-INPUT:		.byte	0x14, 0x11, 0x32, 0x22, 0x08, 0x44, 0x04, 0x11, 0x08, 0x55
-
-
-
-
-;.text
 ;-------------------------------------------------------------------------------
                                             ; Main loop here
 ;-------------------------------------------------------------------------------
 
-;start:
-	;Initialize the InputPointer at the start of the input
+start:
+	;Initialize the InputPointer at the start of the input and the ResultsPointer at
+	; the start of RAM (0x0200)
 	mov		#INPUT, 			InputPointer
-	mov		#Results,			ResultsPointer
+	mov		#0x200,				ResultsPointer
 
 GetOperand1:
-	;Get the first Operand
+	;Get the first Operand and put it in RAM
 	mov.b	0(InputPointer), 	Operand1
 	inc		InputPointer
+	mov.b	Operand1,			0(ResultsPointer)
+
 
 GetOperation:
-	;Get the Operation and Check if it is END_OP
+	;Get the Operation and Check if it is END_OP or CLR_OP
 	mov.b	0(InputPointer), 	Operation
 	cmp		&END_OP, 			Operation
 	jeq		holdingPattern
+	cmp		#CLR_OP, 			Operation
+	jeq		SetClear
 
 	;Get Operand 2
 	inc 	InputPointer
@@ -95,7 +92,7 @@ AddNumbers:
 	jnc		StoreResult						;If the Result didn't overflow, then store the result
 
 	;If the result overflowed, store 0xFF per instructions
-	mov		#0xFF,				0(Operand1)
+	mov		#0xFF,				Operand1
 	jmp		StoreResult
 
 SubNumbers:
@@ -104,7 +101,7 @@ SubNumbers:
 	jn		NegativeResult						;If the Result didn't overflow, then store the result
 	jmp		StoreResult
 
-	;If the result is negative,  per instructions
+	;If the result is negative, store 0x00 per instructions
 NegativeResult:
 	mov		#0x00,				Operand1
 	jmp		StoreResult
@@ -112,8 +109,9 @@ NegativeResult:
 SetClear:
 	; Increment RAM Pointer, Put 0x00, Increment RAM Pointer
 	inc		ResultsPointer
-	mov		#0,					0(ResultsPointer)
+	mov.b	#0,					0(ResultsPointer)
 	inc		ResultsPointer
+	inc		InputPointer
 	jmp		GetOperand1
 
 MultNumbers:
@@ -121,7 +119,7 @@ MultNumbers:
 	; This will result in an execution time of O(Log N)
 
 StoreResult:
-	mov		Operand1,			0(ResultsPointer)
+	mov.b		Operand1,			0(ResultsPointer)
 	jmp 	GetOperation
 
 
