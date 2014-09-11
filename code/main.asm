@@ -22,9 +22,14 @@ Operand2:		.equ	r5
 Operation:		.equ	r6
 InputPointer:	.equ	r7
 ResultsPointer:	.equ	r8
+MultAddCounter:	.equ	r9
+MultRotCounter:	.equ	r10
+MultAnswer:		.equ	r11
 
-INPUT:		.byte	0x77, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
-
+;	Required Functionality
+;INPUT:		.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
+;	B Functionality
+INPUT:		.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xDD, 0x44, 0x08, 0x22, 0x09, 0x44, 0xFF, 0x22, 0xFD, 0x55
 
 ;-------------------------------------------------------------------------------
             .text                           ; Assemble into program memory
@@ -49,7 +54,7 @@ start:
 	mov		#0x200,				ResultsPointer
 
 GetOperand1:
-	;Get the first Operand and put it in RAM
+	;Get the first Operand
 	mov.b	0(InputPointer), 	Operand1
 	inc		InputPointer
 	mov.b	Operand1,			0(ResultsPointer)
@@ -108,7 +113,7 @@ NegativeResult:
 
 SetClear:
 	; Increment RAM Pointer, Put 0x00, Increment RAM Pointer
-	inc		ResultsPointer
+	;inc		ResultsPointer
 	mov.b	#0,					0(ResultsPointer)
 	inc		ResultsPointer
 	inc		InputPointer
@@ -117,9 +122,37 @@ SetClear:
 MultNumbers:
 	; Multiply by powers of 2 (rotate left) then add the rest
 	; This will result in an execution time of O(Log N)
+	; Whichever operand is smaller will be the counter
+;	cmp		Operand1, 			Operand2
+;	jge		useOp1AsCounter
+;	mov		Operand2, 			MultCounter
+;	jmp		MultStep2
+
+userOp1AsCounter:
+;	mov		Operand1, 			MultCounter
+	push	Operand1
+	mov 	Operand2,			Operand1
+	pop		Operand2
+
+MultStep2:	;Find powers of two and non-power of 2 multiplicants
+	; Operand 1 (thing to add) < Operand 2
+	; See if the Operand2 is a power of two and rotate the answer (MultRotCounter)
+	; Otherwise add 1 to the MultAddCounter to add extras later
+	; Ex: If Operand 2 is #10, then it's 0b1010, so rotate three times, add 2 times
+	; Ex2: If Operand 2 is #55, then it's 0b110111, so rotate 5 times, add 5
+	; and add 2.
+
+	; Initialize Counters to 0;
+	mov		#0,					MultRotCounter
+	mov		#0,					MultAddCounter
+
+	; Rotate Right, if LSB is 0, needs a Rotate
+	; If LSB is 1, then
+
 
 StoreResult:
-	mov.b		Operand1,			0(ResultsPointer)
+	mov.b	Operand1,			0(ResultsPointer)
+	inc		ResultsPointer
 	jmp 	GetOperation
 
 
