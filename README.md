@@ -7,7 +7,7 @@ The purpose of this lab is to demonstrate how basic calculator functionality can
 ##Prelab
 
 ###Software Flowchart
-![alt text](https://github.com/jniquette/ECE382-Lab1/images/software_flowchart.png "Software Flowchart")
+![alt text](https://github.com/jniquette/ECE382-Lab1/blob/master/images/Lab1%20Software%20Flow%20Chart.png "Software Flowchart")
 
 
 
