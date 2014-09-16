@@ -1,6 +1,9 @@
 ;-------------------------------------------------------------------------------
-; MSP430 Assembler Code Template for use with TI Code Composer Studio
-;
+; ECE382 - Lab 1 - MSP430 Calculator
+;	Author: 	C2C Justin Niquette
+;	Instructor:	Capt Trimble
+;	MCU: 		MSP430G2553
+;	Date:		16 Sep 2014
 ;
 ;-------------------------------------------------------------------------------
             .cdecls C,LIST,"msp430.h"       ; Include device header file
