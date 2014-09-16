@@ -22,14 +22,15 @@ Operand2:		.equ	r5
 Operation:		.equ	r6
 InputPointer:	.equ	r7
 ResultsPointer:	.equ	r8
-MultAddCounter:	.equ	r9
-MultRotCounter:	.equ	r10
-MultAnswer:		.equ	r11
+MultCount:		.equ	r11
+Accumulator:	.equ	r12
 
 ;	Required Functionality
 ;INPUT:		.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
 ;	B Functionality
-INPUT:		.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xDD, 0x44, 0x08, 0x22, 0x09, 0x44, 0xFF, 0x22, 0xFD, 0x55
+;INPUT:		.byte	0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0xDD, 0x44, 0x08, 0x22, 0x09, 0x44, 0xFF, 0x22, 0xFD, 0x55
+;	A Functionality
+INPUT:		.byte	0x22, 0x11, 0x22, 0x22, 0x33, 0x33, 0x08, 0x44, 0x08, 0x22, 0x09, 0x44, 0xff, 0x11, 0xff, 0x44, 0xcc, 0x33, 0x02, 0x33, 0x00, 0x44, 0x33, 0x33, 0x08, 0x55
 
 ;-------------------------------------------------------------------------------
             .text                           ; Assemble into program memory
@@ -123,12 +124,12 @@ MultNumbers:
 	; Multiply by powers of 2 (rotate left) then add the rest
 	; This will result in an execution time of O(Log N)
 	; Whichever operand is smaller will be the counter
-;	cmp		Operand1, 			Operand2
-;	jge		useOp1AsCounter
+	cmp		Operand1, 			Operand2
+	jge		useOp1AsCounter
 ;	mov		Operand2, 			MultCounter
-;	jmp		MultStep2
+	jmp		MultStep2
 
-userOp1AsCounter:
+useOp1AsCounter:
 ;	mov		Operand1, 			MultCounter
 	push	Operand1
 	mov 	Operand2,			Operand1
@@ -142,13 +143,39 @@ MultStep2:	;Find powers of two and non-power of 2 multiplicants
 	; Ex2: If Operand 2 is #55, then it's 0b110111, so rotate 5 times, add 5
 	; and add 2.
 
-	; Initialize Counters to 0;
-	mov		#0,					MultRotCounter
-	mov		#0,					MultAddCounter
+	; Initialize Accumulator to 0 and count to 8 (for 8 bit);
+	mov		#0,					Accumulator
+	mov		#8,					MultCount
 
-	; Rotate Right, if LSB is 0, needs a Rotate
-	; If LSB is 1, then
+MultLoop:
+	; See if we've reached all 8 bits
+	cmp		#0,					MultCount
+	jeq		DoneMultiplying
 
+	; Shift Op2 Right and Check for carry
+	rrc		Operand2
+	jnc		DoNotAdd
+	add		Operand1,			Accumulator
+
+DoNotAdd:
+	;	Before Rotating, See if Op1 >= 0x100 and will overflow
+	cmp		#0x100,				Operand1
+	jge		Overflow
+	rla		Operand1		;Check here for overflow
+;	bit		#0xfeff,			r2	;Test Status Bits for Overflow (V)
+;	jnz		Overflow
+	dec.b	MultCount
+	jmp		MultLoop
+
+
+Overflow:
+	; If carry bit, then the result > 255, so output FF as answer
+	mov.b	#255, Operand1
+	jmp		StoreResult
+
+DoneMultiplying:
+	add		Accumulator,		Operand1
+	; Fall to StoreResult
 
 StoreResult:
 	mov.b	Operand1,			0(ResultsPointer)

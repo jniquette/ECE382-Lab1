@@ -17,6 +17,12 @@ Secondly, since the CLR_OP Operation doesn't have a second operand, I moved its 
 The following flowchart shows the modified sequence of events.
 ![alt text](https://github.com/jniquette/ECE382-Lab1/blob/master/images/software_flowchart2.png "Modified Software Flowchart")
 
+##Code
+All code for this project can be found in code/main.asm.
+
+##Testing Methodology
+The INPUT Constant was set to each of the required test cases, the code was built, and the debug started. Before stepping through the debug process, the RAM was cleared from 0x0200 to 0x0300 so that it would be easy to see where the results were stored. For each test case I stepped through the program and matched my hand calculations to those that appeared in the results section of RAM.
+
 ##Test Cases
 ###Required Functionality
 Input: 0x11, 0x11, 0x11, 0x11, 0x11, 0x44, 0x22, 0x22, 0x22, 0x11, 0xCC, 0x55
